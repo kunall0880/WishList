@@ -5,7 +5,7 @@ import { GlassCard } from "@/components/shared/GlassCard";
 import { formatCurrency } from "@/lib/utils";
 import useSWR from "swr";
 
-const fetcher = (url: string) => fetch(url).then((res) => res.json()).then(r => r.data);
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 interface CustomTooltipProps {
   active?: boolean;
@@ -26,7 +26,8 @@ function CustomTooltip({ active, payload }: CustomTooltipProps) {
 }
 
 export function AllocationPieChart() {
-  const { data: goals = [], isLoading } = useSWR("/api/goals", fetcher);
+  const { data: apiData, isLoading } = useSWR("/api/goals", fetcher);
+  const goals = apiData?.data || [];
 
   // Default mock breakdown if loading
   let allocationData = [

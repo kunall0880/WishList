@@ -52,11 +52,12 @@ const itemVariants = {
   },
 };
 
-const fetcher = (url: string) => fetch(url).then(r => r.json()).then(r => r.data);
+const fetcher = (url: string) => fetch(url).then(r => r.json());
 
 export default function DashboardPage() {
   const { data: session } = useSession();
-  const { data: goals, isLoading, error } = useSWR("/api/goals", fetcher);
+  const { data: apiData, isLoading, error } = useSWR("/api/goals", fetcher);
+  const goals = apiData?.data;
   const { data: profileData } = useSWR("/api/user/profile", fetcher);
   const setLocalGoals = useGoalStore((state) => state.setGoals);
 
@@ -77,8 +78,8 @@ export default function DashboardPage() {
     ? Math.round(goals.reduce((sum: number, g: any) => sum + (g.calculations?.successProbability ?? 0), 0) / goals.length)
     : 0;
 
-  const savingsRate = profileData?.profile?.savingsRate ?? 0;
-  const hasEmergencyFund = profileData?.profile?.hasEmergencyFund ?? false;
+  const savingsRate = profileData?.data?.profile?.savingsRate ?? 0;
+  const hasEmergencyFund = profileData?.data?.profile?.hasEmergencyFund ?? false;
   const financialHealthScore = calculateFinancialHealthScore(
     avgSuccessProb,
     savingsRate,

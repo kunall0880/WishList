@@ -16,7 +16,7 @@ import { formatCurrency } from "@/lib/utils";
 import { generateCorpusProjection } from "@/lib/financial-engine";
 import useSWR from "swr";
 
-const fetcher = (url: string) => fetch(url).then((res) => res.json()).then(r => r.data);
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 const timeFilters = ["1Y", "3Y", "5Y", "10Y"] as const;
 type TimeFilter = (typeof timeFilters)[number];
@@ -57,7 +57,8 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
 
 export function CorpusGrowthChart() {
   const [activeFilter, setActiveFilter] = useState<TimeFilter>("5Y");
-  const { data: goals = [], isLoading } = useSWR("/api/goals", fetcher);
+  const { data: apiData, isLoading } = useSWR("/api/goals", fetcher);
+  const goals = apiData?.data || [];
 
   // Derived metrics from real active goals
   const totalMonthlySIP = goals.reduce((sum: number, g: any) => sum + (g.calculations?.requiredSIP ?? g.currentSIP ?? 0), 0);
