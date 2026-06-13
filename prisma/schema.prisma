@@ -1,0 +1,166 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ═══════════════════════════════════════════════════
+// NextAuth.js required models
+// ═══════════════════════════════════════════════════
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ═══════════════════════════════════════════════════
+// Application models
+// ═══════════════════════════════════════════════════
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  image         String?
+  emailVerified DateTime?
+  plan          Plan      @default(FREE)
+  goals         Goal[]
+  accounts      Account[]
+  sessions      Session[]
+  profile       UserProfile?
+  notifications Notification[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model UserProfile {
+  id                 String   @id @default(cuid())
+  userId             String   @unique
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  age                Int?
+  monthlySalary      Float    @default(0)
+  monthlyExpenses    Float    @default(0)
+  currentInvestments Float    @default(0)
+  riskComfort        Risk     @default(BALANCED)
+  hasEmergencyFund   Boolean  @default(false)
+  savingsRate        Float    @default(0)
+  investmentStyle    String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  message   String
+  type      String   @default("INFO")
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([read])
+}
+
+model Goal {
+  id                  String     @id @default(cuid())
+  userId              String
+  user                User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name                String
+  type                GoalType   @default(OTHER)
+  emoji               String     @default("🎯")
+  targetDate          DateTime
+  targetAmountToday   Float
+  inflationRate       Float      @default(6)
+  currentCorpus       Float      @default(0)
+  currentSIP          Float      @default(0)
+  lumpSumAvailable    Float      @default(0)
+  monthlySalary       Float      @default(0)
+  salaryGrowthRate    Float      @default(10)
+  monthlyBudget       Float      @default(0)
+  riskAppetite        Risk       @default(BALANCED)
+  priority            Int        @default(3)
+  status              GoalStatus @default(ON_TRACK)
+  sipDate             Int        @default(1)
+  aiInsights          Json?
+  aiInsightsUpdatedAt DateTime?
+  notes               String?
+  isArchived          Boolean    @default(false)
+  createdAt           DateTime   @default(now())
+  updatedAt           DateTime   @updatedAt
+
+  @@index([userId])
+  @@index([status])
+}
+
+// ═══════════════════════════════════════════════════
+// Enums
+// ═══════════════════════════════════════════════════
+
+enum GoalType {
+  TRAVEL
+  HOUSE
+  CAR
+  EDUCATION
+  WEDDING
+  EMERGENCY
+  RETIREMENT
+  BUSINESS
+  BIKE
+  GADGET
+  RENOVATION
+  OTHER
+}
+
+enum Risk {
+  CONSERVATIVE
+  BALANCED
+  AGGRESSIVE
+}
+
+enum GoalStatus {
+  ON_TRACK
+  AT_RISK
+  OFF_TRACK
+  COMPLETED
+}
+
+enum Plan {
+  FREE
+  PRO
+  PREMIUM
+}
